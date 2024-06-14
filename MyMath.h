@@ -26,7 +26,7 @@ namespace Math {
         while (b != 0)
         {
             int64_t temp = b;
-            b = a % b;
+            b = Mod(a, b);
             a = temp;
         }
     
