@@ -6,6 +6,33 @@
 
 namespace Math {
 
+    int64_t Floor(double x)
+    {
+        int64_t ret = x;
+    
+        if (ret > x)
+            return ret - 1;
+        
+        return ret;
+    }
+    
+    double Mod(double x, double y)
+    {
+        return x - y * Floor(x / y);
+    }
+    
+    int64_t EuclidGCD(int64_t a, int64_t b)
+    {
+        while (b != 0)
+        {
+            int64_t temp = b;
+            b = a % b;
+            a = temp;
+        }
+    
+        return a;
+    }
+    
     bool Contains(const std::vector<double>& vector, double element)
     {
         bool ret = false;
@@ -64,6 +91,16 @@ namespace Math {
         }
     
         return arr[indexOfGreatestCount].Element;
+    }
+    
+    int64_t FindUniqueNumber(int64_t* arr, size_t arrSize)
+    {
+        int64_t ret = 0;
+    
+        for (size_t i = 0; i < arrSize; i++)
+            ret ^= arr[i];
+    
+        return ret;
     }
     
     namespace glm {
@@ -170,10 +207,12 @@ namespace Math {
     {
         static constexpr double Pi = 3.141592653589793238462643383279502884;
     
-        while (x > 3 * Pi / 2)
-            x -= 3 * Pi / 2;
-        while (x < -3 * Pi / 2)
-            x += 3 * Pi / 2;
+        x = Mod(x, 2 * Pi);
+    
+        if (x <= -1.5 * Pi)
+            x += 2 * Pi;
+        else if (x > 1.5 * Pi)
+            x -= 2 * Pi;
         
         double ret = 1 - (IntegerExponentPower(x, 2) / Factorial(2)) + (IntegerExponentPower(x, 4) / Factorial(4)) - (IntegerExponentPower(x, 6) / Factorial(6)) + (IntegerExponentPower(x, 8) / Factorial(8)) - (IntegerExponentPower(x, 10) / Factorial(10)) + (IntegerExponentPower(x, 12) / Factorial(12));
     
@@ -184,11 +223,27 @@ namespace Math {
     {
         static constexpr double Pi = 3.141592653589793238462643383279502884;
     
+        x = Mod(x, 2 * Pi);
+    
+        if (x <= -1.5 * Pi)
+            x += 2 * Pi;
+        else if (x > 1.5 * Pi)
+            x -= 2 * Pi;
+    
         return Cos(x - Pi / 2);
     }
     
     double Tan(double x)
     {
+        static constexpr double Pi = 3.141592653589793238462643383279502884;
+    
+        x = Mod(x, 2 * Pi);
+    
+        if (x <= -1.5 * Pi)
+            x += 2 * Pi;
+        else if (x > 1.5 * Pi)
+            x -= 2 * Pi;
+    
         return Sin(x) / Cos(x);
     }
     
@@ -341,14 +396,19 @@ namespace Math {
         static double staticN = n;
         staticN = n;
     
-        double a = x;
+        static double a = x;
+        a = x;
     
-        FunctionOfX Derivative = ([](double x){
-            return staticN * IntegerExponentPower(x, staticN - 1);
+        FunctionOfX f = FunctionOfX([](double x){
+            return (IntegerExponentPower(x, staticN) - a);
         });
     
-        for (int64_t i = 0; i < (n * n) * (x * x * x * x); i++)
-            x = x - (IntegerExponentPower(x, n) - a) / (Derivative(x));
+        FunctionOfX Derivative = Derive(f);
+    
+        x *= 0.5;
+    
+        for (int64_t i = 0; i < x * n * n; i++)
+            x = x - (f(x) / Derivative(x));
     
         return x;
     }
@@ -363,15 +423,52 @@ namespace Math {
                 addToSize = true;
             
             if (addToSize)
-                size *= integerIncrement;
+                size += 1;
         }
     
-        return size + 10;
+        return IntegerExponentPower(10, size);
+    }
+    
+    std::string TruncatedToString(double x)
+    {
+        std::string xAsString;
+    
+        {
+            std::string xAsStringTemp = std::to_string(x);
+            
+            bool foundDecimalPoint = false;
+            size_t i = 0;
+            while (i < xAsStringTemp.size())
+            {
+                if (xAsStringTemp[i] == '.')
+                    foundDecimalPoint = true;
+    
+                if (!foundDecimalPoint)
+                    xAsString += xAsStringTemp[i];
+                else
+                {
+                    if (xAsStringTemp[i] != '0')
+                        xAsString += xAsStringTemp[i];
+                }
+    
+                i++;
+            }
+        }
+    
+        return xAsString;
     }
     
     double Power(double x, double n)
     {
-        return NthRoot(x, 1 / n);
+        std::string xAsString = TruncatedToString(x);
+    
+        const uint64_t rootIndex = GetSizeOfStringAfterDecimalPoint(xAsString);
+        const uint64_t exponent = n * rootIndex;
+    
+        uint64_t normalizedRootIndex = rootIndex / EuclidGCD(rootIndex, exponent);
+        uint64_t normalizedExponent = exponent / EuclidGCD(rootIndex, exponent);
+    
+        return NthRoot(IntegerExponentPower(x, normalizedExponent), normalizedRootIndex);
     }
     
     double Ln(double x)
@@ -394,6 +491,33 @@ namespace Math {
     double Log(double x, double n)
     {
         return Ln(x) / Ln(n);
+    }
+    
+    #define CHAR_TO_UINT_ERROR_CODE_DEFAULT 100
+    uint64_t CharToUInt(char x, const uint64_t errorCode = 100)
+    {
+        if (x - 48 < 0 || x - 48 > 9)
+            return errorCode;
+    
+        return x - 48;
+    }
+    
+    uint64_t BaseNToBase10(const std::string& value, uint64_t n = 2)
+    {
+        uint64_t ret = 0, significance = 0;
+        for (int64_t i = value.size() - 1; i >= 0; i--)
+        {
+            char charAsUInt = CharToUInt(value[i]);
+    
+            if (charAsUInt != CHAR_TO_UINT_ERROR_CODE_DEFAULT)
+            {
+                ret += (charAsUInt * IntegerExponentPower(n, significance));
+    
+                significance++;
+            }
+        }
+    
+        return ret;
     }
 
 }
