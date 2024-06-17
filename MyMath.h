@@ -4,6 +4,9 @@
 #include <iostream>
 #include <string>
 
+#include "Complex.h"
+#include "BinaryTree.h"
+
 namespace Math {
 
     int64_t Floor(double x)
@@ -103,7 +106,7 @@ namespace Math {
         return ret;
     }
     
-    namespace glm {
+    namespace vlm {
     
         class vec3
         {
@@ -121,7 +124,7 @@ namespace Math {
     
     struct Triangle
     {
-        glm::vec3 P1 = glm::vec3(0.0f), P2 = glm::vec3(0.0f), P3 = glm::vec3(0.0f);
+        vlm::vec3 P1 = vlm::vec3(0.0f), P2 = vlm::vec3(0.0f), P3 = vlm::vec3(0.0f);
     };
     
     void DrawTriangle(const Triangle& triangle)
@@ -137,7 +140,7 @@ namespace Math {
         return *((T*)(((uint64_t)(array)) + (index * sizeof(T))));
     }
     
-    void DrawTriangles(std::vector<glm::vec3> verticies, std::vector<uint32_t> indicies)
+    void DrawTriangles(std::vector<vlm::vec3> verticies, std::vector<uint32_t> indicies)
     {
         std::vector<Triangle> triangles;
         {
@@ -148,9 +151,9 @@ namespace Math {
     
         for (uint32_t i = 0; i < indicies.size(); i++)
         {
-            glm::vec3* arr = ((glm::vec3*)(&(triangles[0])));
+            vlm::vec3* arr = ((vlm::vec3*)(&(triangles[0])));
     
-            Index(arr, i) = Index((glm::vec3*)(&verticies[0]), Index((uint32_t*)(&indicies[0]), i));
+            Index(arr, i) = Index((vlm::vec3*)(&verticies[0]), Index((uint32_t*)(&indicies[0]), i));
         }
     
         for (uint32_t i = 0; i < triangles.size(); i++)
@@ -199,6 +202,24 @@ namespace Math {
         double n = 1;
         for (int64_t i = 0; i < exponent; i++)
             n *= x;
+    
+        return n;
+    }
+
+    Complex IntegerExponentPower(Complex x, double exponent)
+    {
+        Complex n = Complex(1, 0);
+        for (int64_t i = 0; i < exponent; i++)
+            n = n * x;
+    
+        return n;
+    }
+
+    Complexf IntegerExponentPower(Complexf x, double exponent)
+    {
+        Complexf n = Complexf(1.0f, 0.0f);
+        for (int64_t i = 0; i < exponent; i++)
+            n = n * x;
     
         return n;
     }
@@ -252,6 +273,15 @@ namespace Math {
         double ret = 1;
         for (uint64_t i = 1; i < 12; i++)
             ret += IntegerExponentPower(x, i) / Factorial(i);
+        
+        return ret;
+    }
+
+    Complex Exp(Complex x)
+    {
+        Complex ret = Complex(0, 0);
+        for (uint64_t i = 0; i < 100; i++)
+            ret = ret + (IntegerExponentPower(x, i) / Complex(Factorial(i), 0));
         
         return ret;
     }
